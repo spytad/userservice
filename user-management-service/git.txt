@@ -1,0 +1,25 @@
+Remember, any modifications you make in the lab environment won't be saved. If you plan to step away, use the following steps to ensure your changes push to GitHub:
+
+Ensure that you are currently inside the Project directory.
+
+Navigate to the project directory by using: cd <project dir>.
+
+Set up your Git configuration:
+
+Run: git config --global user.email "xxxd@gmail.com"
+Run: git config --global user.name "xxx"
+Add your changes to the staging area:
+
+Run: git add .
+Commit your changes with a descriptive message:
+
+Run: git commit -m "Adding temporary changes to Github"
+The first step is to generate an access token from GitHub.com. Follow directions from the lab Generate GitHub personal access token and copy the access token as a password in the upcoming exercises.
+
+Push your changes to the Git repository:
+
+Run: git push
+git push --set-upstream origin master
+A prompt in the terminal will prompt you to enter your GitHub username and password (your previously created Personal Access Token from Step 5).
+
+These steps ensure your work is safely stored in GitHub, allowing you to continue when you return to the lab environment.
