@@ -1,0 +1,139 @@
+
+
+
+This code provides the necessary files to create a User Service using Node.js and MongoDB. It includes database connection, user model, controller for handling user registration, routes for API endpoints, middleware for authentication, utility functions for response handling, and the main server file to run the application.
+
+// user-service/src/config/db.js
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('MongoDB connected');
+    } catch (error) {
+        console.error('MongoDB connection failed:', error.message);
+        process.exit(1);
+    }
+};
+
+module.exports = connectDB;
+
+// user-service/src/models/User.js
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    password: {
+        type: String,
+        required: true,
+    },
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
+
+// user-service/src/controllers/userController.js
+const User = require('../models/User');
+const bcrypt = require('bcrypt');
+
+// Create a new user
+exports.createUser = async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ username, email, password: hashedPassword });
+        await newUser.save();
+        res.status(201).json({ message: 'User created successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// user-service/src/routes/userRoutes.js
+const express = require('express');
+const { createUser } = require('../controllers/userController');
+const router = express.Router();
+
+router.post('/register', createUser);
+
+module.exports = router;
+
+// user-service/src/middlewares/authMiddleware.js
+const jwt = require('jsonwebtoken');
+
+exports.verifyToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).send('A token is required for authentication');
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+    } catch (error) {
+        return res.status(401).send('Invalid Token');
+    }
+    return next();
+};
+
+// user-service/src/utils/responseHandler.js
+exports.successResponse = (res, message, data) => {
+    res.status(200).json({ message, data });
+};
+
+exports.errorResponse = (res, message) => {
+    res.status(500).json({ message });
+};
+
+// user-service/src/server.js
+const express = require('express');
+const connectDB = require('./config/db');
+const userRoutes = require('./routes/userRoutes');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+
+connectDB();
+app.use('/api/users', userRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+// user-service/package.json
+{
+  "name": "user-service",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.0",
+    "jsonwebtoken": "^8.5.1"
+  }
+}
+
+// user-service/.env
+MONGO_URI=mongodb://localhost:27017/userdb
+JWT_SECRET=your_jwt_secret_here
